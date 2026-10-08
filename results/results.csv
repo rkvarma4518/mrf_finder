@@ -1,2 +1,2 @@
 hospital,state,status,mrf_url,confidence,verified_by_download,warning,note
-WINNEBAGO MENTAL HEALTH INSTITUTE,WI,found,https://www.dhs.wisconsin.gov/dcts/39-1486928_Winnebago-Mental-Health-Institute_standardcharges.csv,high,True,,
+MAYO CLINIC HEALTH SYSTEM – RED CEDAR IN GLENWOOD CITY,WI,not_found,,none,,,"No file could be proven to belong to this hospital, so no URL is returned. These sites blocked automated access: payerprice.com. This is often geo-blocking: retry from a US connection (--proxy) or set ANTHROPIC_API_KEY for the Claude search fallback. Run with -v to see why each candidate was rejected."
