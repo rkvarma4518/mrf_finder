@@ -1,0 +1,2 @@
+hospital,state,status,mrf_url,confidence,verified_by_download,warning,note
+WINNEBAGO MENTAL HEALTH INSTITUTE,WI,found,https://www.dhs.wisconsin.gov/dcts/39-1486928_Winnebago-Mental-Health-Institute_standardcharges.csv,high,True,,

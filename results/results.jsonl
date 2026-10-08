@@ -1,0 +1,1 @@
+{"hospital": "WINNEBAGO MENTAL HEALTH INSTITUTE", "state": "WI", "mrf_url": "https://www.dhs.wisconsin.gov/dcts/39-1486928_Winnebago-Mental-Health-Institute_standardcharges.csv", "confidence": "high", "method": "cms-hpt.txt", "alternatives": [], "status": "found", "file_type": "csv", "size_bytes": "932", "name_match": 1.0, "verified_by_download": true}
