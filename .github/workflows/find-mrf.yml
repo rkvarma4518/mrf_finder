@@ -1,0 +1,102 @@
+name: Find hospital MRF files
+
+on:
+  # Run by hand: Actions tab -> "Find hospital MRF files" -> Run workflow
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "One hospital name (leave EMPTY to run every row of hospitals.csv)"
+        required: false
+        default: ""
+      state:
+        description: "State, e.g. WI (optional)"
+        required: false
+        default: ""
+      city:
+        description: "City (optional)"
+        required: false
+        default: ""
+      url:
+        description: "Hospital website (optional, may be wrong)"
+        required: false
+        default: ""
+  # Runs automatically whenever you edit hospitals.csv
+  push:
+    paths:
+      - hospitals.csv
+
+permissions:
+  contents: write   # lets the job save results back into the repo
+
+concurrency:
+  group: find-mrf
+  cancel-in-progress: false
+
+jobs:
+  find:
+    runs-on: ubuntu-latest   # GitHub-hosted runners are in the US
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install browser (optional fallback for blocked / JavaScript sites)
+        run: playwright install chromium
+        continue-on-error: true
+
+      - name: Find the files
+        env:
+          # All optional - add them under Settings -> Secrets and variables -> Actions
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+          MRF_PROXY: ${{ secrets.MRF_PROXY }}
+          IN_NAME: ${{ inputs.name }}
+          IN_STATE: ${{ inputs.state }}
+          IN_CITY: ${{ inputs.city }}
+          IN_URL: ${{ inputs.url }}
+        run: |
+          mkdir -p results logs
+          INPUT=hospitals.csv
+          if [ -n "$IN_NAME" ]; then
+            python - <<'PY'
+          import csv, os
+          with open("single.csv", "w", newline="", encoding="utf-8") as f:
+              w = csv.writer(f)
+              w.writerow(["name", "state", "city", "url"])
+              w.writerow([os.environ["IN_NAME"], os.environ["IN_STATE"],
+                          os.environ["IN_CITY"], os.environ["IN_URL"]])
+          PY
+            INPUT=single.csv
+          fi
+          python mrf_agent.py --csv "$INPUT" --out results/results.jsonl \
+            --workers 3 -v 2> logs/log.txt
+
+      - name: Build results.csv and summary
+        if: always()
+        run: |
+          mkdir -p results
+          python summarize.py
+
+      - name: Upload results and log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mrf-results
+          path: |
+            results/
+            logs/
+
+      - name: Save results into the repo
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/results.csv results/results.jsonl || true
+          git diff --cached --quiet || (git commit -m "Update MRF results" && git push)
